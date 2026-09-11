@@ -1,16 +1,17 @@
- 'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
+import { TrendingUp, Lock, EyeOff, Hash, Sparkles, UserPlus } from 'lucide-react';
 
 const FAKE_TRENDING = [
-  { topic: 'Something', interactions: '14.2K' },
-  { topic: 'Something else', interactions: '8.7K' },
-  { topic: 'A thing that happened', interactions: '5.1K' },
-  { topic: 'Whatever this is', interactions: '3.4K' },
-  { topic: 'You know what', interactions: '2.8K' },
+  { tag: 'HackathonDrama', interactions: '48.2K', desc: 'Nobody knows what happened.' },
+  { tag: 'BreakingSecret', interactions: '32.1K', desc: 'Confidential and permanently hidden.' },
+  { tag: 'UnpopularOpinion', interactions: '19.4K', desc: 'You will never hear it.' },
+  { tag: 'MajorAnnouncement', interactions: '14.8K', desc: 'Post content scrubbed.' },
+  { tag: 'CatVideoLeak', interactions: '11.0K', desc: 'Audio and video blocked.' },
 ];
 
 export default function ExplorePage() {
@@ -36,97 +37,100 @@ export default function ExplorePage() {
   if (loading) return null;
 
   return (
-    <>
+    <div className="min-h-screen bg-[#07070b]">
       <Navbar />
-      <main style={{ paddingTop: '80px', maxWidth: '700px', margin: '0 auto', padding: '80px 16px 40px' }}>
+      <main className="max-w-2xl mx-auto pt-24 pb-16 px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>Explore The Unknown</span>
+              <Sparkles className="w-4 h-4 text-violet-400" />
+            </h1>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Discover what the world is buzzing about without having any way to see it.
+            </p>
+          </div>
+        </div>
 
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '24px' }}>Explore</h1>
-
-        {/* Trending */}
-        <div className="glass" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🔥</span>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Trending</h2>
+        {/* Trending Hashtags Section */}
+        <div className="glass-panel p-5 mb-6 border border-white/10 shadow-xl">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
+            <TrendingUp className="w-4 h-4 text-rose-400" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              Trending Obscurities
+            </h2>
           </div>
 
-          {FAKE_TRENDING.map((t, i) => (
-            <div key={i} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '12px 0',
-              borderBottom: i < FAKE_TRENDING.length - 1 ? '1px solid var(--border)' : 'none'
-            }}>
-              <div>
-                <div style={{ fontWeight: 600, marginBottom: '2px' }}>{t.topic}</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  {t.interactions} interactions
+          <div className="space-y-3">
+            {FAKE_TRENDING.map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/[0.04] transition-colors group cursor-default"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-zinc-400 group-hover:text-violet-300 group-hover:bg-violet-500/10 transition-colors">
+                    <Hash className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-zinc-200 group-hover:text-violet-300 transition-colors">
+                      #{item.tag}
+                    </div>
+                    <div className="text-[11px] text-zinc-400">{item.desc}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-zinc-400">{item.interactions}</span>
+                  <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-white/5 text-zinc-400 border border-white/5">
+                    Redacted
+                  </span>
                 </div>
               </div>
-              <div style={{
-                background: 'rgba(124,92,252,0.1)', border: '1px solid rgba(124,92,252,0.2)',
-                borderRadius: '6px', padding: '4px 10px', fontSize: '0.75rem', color: 'var(--text-muted)'
-              }}>
-                Unavailable
-              </div>
-            </div>
-          ))}
-
-          <div style={{
-            marginTop: '16px', padding: '12px', background: 'var(--surface-2)',
-            borderRadius: '10px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)',
-            fontStyle: 'italic'
-          }}>
-            You cannot see any of these.
+            ))}
           </div>
         </div>
 
-        {/* Suggested users */}
-        <div className="glass" style={{ padding: '24px', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px' }}>👤 You might know</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textAlign: 'center', padding: '20px 0', fontStyle: 'italic' }}>
-            Some people. You cannot see who they are or what they've posted.
-          </p>
+        {/* Discovery Feed Grid */}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+            <EyeOff className="w-3.5 h-3.5 text-violet-400" />
+            <span>Encrypted Grid Feed</span>
+          </h2>
+          <span className="text-[10px] text-zinc-400">Tap to inspect unavailable post</span>
         </div>
 
-        {/* Recent posts grid (all locked) */}
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px' }}>Recent</h2>
-
         {fetching ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div className="grid grid-cols-3 gap-2.5">
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="skeleton" style={{ aspectRatio: '1', borderRadius: '10px' }} />
+              <div key={i} className="aspect-square rounded-xl bg-white/5 animate-pulse" />
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <div className="glass" style={{ padding: '40px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--text-muted)' }}>Nothing here yet. But even if there was, you couldn't see it.</p>
+          <div className="glass-panel p-8 text-center border border-dashed border-white/10">
+            <Lock className="w-6 h-6 text-zinc-400 mx-auto mb-2" />
+            <p className="text-xs text-zinc-400">No public posts found. Start posting to silence the network.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div className="grid grid-cols-3 gap-2.5">
             {posts.map((p: any) => (
               <div
                 key={p.id}
                 onClick={() => router.push(`/post/${p.id}`)}
-                style={{
-                  aspectRatio: '1', borderRadius: '10px', cursor: 'pointer',
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--border)',
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: '4px', transition: 'transform 0.15s ease',
-                  position: 'relative', overflow: 'hidden'
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = '')}
+                className="aspect-square glass-panel p-2 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-violet-500/50 hover:scale-[1.03] transition-all duration-200 group relative overflow-hidden"
               >
-                <span style={{ fontSize: '1.5rem' }}>🔒</span>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                  ❤️ {p.likes} 💬 {p.comments}
+                <div className="w-8 h-8 rounded-full bg-violet-600/10 group-hover:bg-violet-600/25 border border-violet-500/20 flex items-center justify-center text-violet-300 transition-colors">
+                  <Lock className="w-3.5 h-3.5" />
                 </div>
+                <span className="text-[10px] font-bold text-zinc-300">@{p.author?.username}</span>
+                <span className="text-[9px] font-mono text-zinc-400">
+                  ❤️ {p.likes} • 💬 {p.comments}
+                </span>
               </div>
             ))}
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }

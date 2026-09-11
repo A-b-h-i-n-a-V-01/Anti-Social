@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { User, Mail, Key, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -25,67 +26,91 @@ export default function RegisterPage() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div className="glass" style={{ padding: '40px', width: '100%', maxWidth: '420px' }} >
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🫥</div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px' }}>
-            Create your account
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Your posts will be hidden immediately upon creation.
+    <main className="min-h-screen relative flex items-center justify-center p-4 bg-[#07070b] overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute w-[450px] h-[450px] rounded-full bg-fuchsia-600/15 blur-[120px] pointer-events-none bottom-1/4 right-1/3" />
+
+      <div className="glass-panel p-8 w-full max-w-md border border-white/10 shadow-2xl relative z-10">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-violet-600 to-rose-500 p-[1.5px] mb-3 shadow-lg shadow-violet-500/25">
+            <div className="w-full h-full bg-[#0c0c14] rounded-[14px] flex items-center justify-center text-2xl">
+              🫥
+            </div>
+          </div>
+          <h1 className="text-xl font-black text-white">Join Anti-Social</h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Create an account. Your transmissions will be hidden from everyone immediately.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Username</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-violet-400" />
+              <span>Username</span>
+            </label>
             <input
-              className="input"
-              placeholder="your_username"
+              className="input-modern text-xs"
+              placeholder="choose_handle"
               value={form.username}
-              onChange={e => setForm({ ...form, username: e.target.value })}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
               required
             />
           </div>
+
           <div>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Email</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-violet-400" />
+              <span>Email Address</span>
+            </label>
             <input
-              className="input"
+              className="input-modern text-xs"
               type="email"
-              placeholder="you@example.com"
+              placeholder="name@domain.com"
               value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
             />
           </div>
+
           <div>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Password</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-violet-400" />
+              <span>Password</span>
+            </label>
             <input
-              className="input"
+              className="input-modern text-xs"
               type="password"
               placeholder="••••••••"
               value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>
 
           {error && (
-            <div style={{ background: 'rgba(255,77,109,0.1)', border: '1px solid rgba(255,77,109,0.3)', borderRadius: '8px', padding: '10px 14px', fontSize: '0.88rem', color: 'var(--danger)' }}>
-              {error}
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 flex-shrink-0 text-rose-400" />
+              <span>{error}</span>
             </div>
           )}
 
-          <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: '4px', padding: '14px', fontSize: '1rem' }}>
-            {loading ? 'Creating account...' : 'Join Anti-Social'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-gradient w-full py-3 text-xs font-bold mt-2"
+          >
+            <span>{loading ? 'Creating account...' : 'Start Being Isolated'}</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-          Already have an account?{' '}
-          <Link href="/auth/login" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Sign in</Link>
-        </p>
+        <div className="mt-6 text-center text-xs text-zinc-400">
+          Already part of the void?{' '}
+          <Link href="/auth/login" className="text-violet-400 hover:text-violet-300 font-semibold underline underline-offset-4">
+            Sign In
+          </Link>
+        </div>
       </div>
     </main>
   );

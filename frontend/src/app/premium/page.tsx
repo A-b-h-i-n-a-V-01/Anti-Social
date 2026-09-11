@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
+import confetti from 'canvas-confetti';
+import { Check, X, Sparkles, ShieldCheck, CreditCard, Lock, ArrowRight, Zap, Crown } from 'lucide-react';
 
 type PremiumState = 'idle' | 'paying' | 'paid';
 
@@ -11,28 +13,28 @@ export default function PremiumPage() {
   const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
   const [state, setState] = useState<PremiumState>('idle');
-  const [info, setInfo] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth/login');
-    if (user) loadInfo();
   }, [user, loading]);
-
-  const loadInfo = async () => {
-    try {
-      const data = await api.getPremiumInfo();
-      setInfo(data);
-    } catch {}
-  };
 
   const handleSubscribe = async () => {
     setState('paying');
-    // Simulate payment processing moment for comedic effect
-    await new Promise(r => setTimeout(r, 2200));
+    // Dramatic simulated banking delay
+    await new Promise((r) => setTimeout(r, 2000));
     try {
       await api.subscribe();
       await refreshUser();
       setState('paid');
+      // Fire celebratory confetti for the useless upgrade!
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#8b5cf6', '#ec4899', '#fbbf24'],
+        });
+      } catch {}
     } catch {
       setState('idle');
     }
@@ -40,144 +42,142 @@ export default function PremiumPage() {
 
   if (loading) return null;
 
-  // Already premium — show the "you paid and it's still null" screen
-  if (user?.is_premium && state !== 'paid') {
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: '80px', maxWidth: '520px', margin: '0 auto', padding: '80px 16px 40px' }}>
-          <div className="glass" style={{ padding: '48px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⭐</div>
-            <span className="premium-badge" style={{ display: 'inline-block', marginBottom: '16px', fontSize: '0.85rem', padding: '4px 14px' }}>
-              ANTI-SOCIAL PREMIUM™
-            </span>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px' }}>You're a Premium member.</h1>
-            <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: '24px' }}>
-              You can now see who posted.<br/>
-              You can see when they posted.<br/>
-              You can see the like count.<br/>
-              You can see that there are comments.
-            </p>
-            <div style={{
-              padding: '16px', background: 'rgba(255,77,109,0.08)', border: '1px solid rgba(255,77,109,0.2)',
-              borderRadius: '10px', marginBottom: '28px', color: 'var(--danger)', fontWeight: 600
-            }}>
-              You still cannot see the post.
+  return (
+    <div className="min-h-screen bg-[#07070b]">
+      <Navbar />
+      <main className="max-w-xl mx-auto pt-24 pb-16 px-4">
+        {/* Already Premium or Just Paid */}
+        {(user?.is_premium || state === 'paid') && state !== 'paying' ? (
+          <div className="glass-panel p-8 text-center border border-amber-500/30 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-rose-500 to-violet-600" />
+
+            <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-5 shadow-lg shadow-amber-500/20">
+              <Crown className="w-8 h-8" />
             </div>
-            <button className="btn-ghost" onClick={() => router.push('/feed')}>
-              Go back to not seeing posts →
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider mb-4">
+              <Sparkles className="w-3 h-3" />
+              <span>Anti-Social VIP Pro</span>
+            </div>
+
+            <h1 className="text-2xl font-extrabold text-white mb-2">
+              {state === 'paid' ? 'Transaction Settled.' : "You're a Valued Member."}
+            </h1>
+            <p className="text-sm text-zinc-400 mb-6">
+              Your account now has highest-tier status across the entire network.
+            </p>
+
+            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 mb-6 text-left space-y-3">
+              {[
+                { title: 'Golden PRO Badge on your name', active: true },
+                { title: 'Full access to comment counters', active: true },
+                { title: 'Ability to see like tallies in real-time', active: true },
+                { title: 'Readable post content', active: false },
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-3 text-xs">
+                  {f.active ? (
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3" />
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0">
+                      <X className="w-3 h-3" />
+                    </div>
+                  )}
+                  <span className={f.active ? 'text-zinc-200' : 'text-rose-300 font-semibold'}>
+                    {f.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold mb-6 flex items-center justify-center gap-2">
+              <Lock className="w-4 h-4" />
+              <span>You still cannot see a single post. Thank you for your support.</span>
+            </div>
+
+            <button
+              onClick={() => router.push('/feed')}
+              className="btn-gradient w-full py-3 text-xs"
+            >
+              <span>Return to Feeding the Void</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-        </main>
-      </>
-    );
-  }
+        ) : state === 'paying' ? (
+          /* Payment in progress simulation */
+          <div className="glass-panel p-10 text-center border border-violet-500/30">
+            <div className="w-16 h-16 mx-auto rounded-full bg-violet-600/20 flex items-center justify-center text-violet-400 mb-5 animate-spin">
+              <CreditCard className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Simulating Secure Payment...</h2>
+            <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+              Charging ₹99.00 INR to your imaginary wallet and provisioning zero additional visibility permissions.
+            </p>
+          </div>
+        ) : (
+          /* Pricing Card */
+          <div className="glass-panel p-8 text-center border border-white/10 relative overflow-hidden shadow-2xl">
+            {/* Top Accent Gradient Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-amber-400" />
 
-  // Payment success screen
-  if (state === 'paid') {
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: '80px', maxWidth: '520px', margin: '0 auto', padding: '80px 16px 40px' }}>
-          <div className="glass" style={{ padding: '48px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '8px' }}>Payment successful.</h1>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 400, color: 'var(--text-muted)', marginBottom: '24px' }}>Congratulations.</h2>
-            <div style={{
-              padding: '20px', background: 'rgba(255,77,109,0.08)', border: '1px solid rgba(255,77,109,0.2)',
-              borderRadius: '12px', marginBottom: '28px'
-            }}>
-              <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--danger)' }}>
-                You still can't see the post.
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-semibold uppercase tracking-wider mb-6">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Unlock Premium Experience</span>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">₹99</span>
+                <span className="text-xs text-zinc-400 font-medium">/ lifetime</span>
+              </div>
+              <p className="text-xs text-zinc-400 mt-2">
+                Pay once. Experience the psychological luxury of seeing absolutely nothing.
               </p>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.6 }}>
-              ₹99 has been charged.<br/>
-              Your access to not seeing posts has been upgraded.
-            </div>
-            <button className="btn-primary" onClick={() => router.push('/feed')}>
-              Return to the void
-            </button>
-          </div>
-        </main>
-      </>
-    );
-  }
 
-  // Payment processing
-  if (state === 'paying') {
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: '80px', maxWidth: '520px', margin: '0 auto', padding: '80px 16px 40px' }}>
-          <div className="glass" style={{ padding: '48px', textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '20px', animation: 'spin 1s linear infinite' }}>💳</div>
-            <h2 style={{ fontWeight: 600, marginBottom: '8px' }}>Processing payment...</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-              Taking your ₹99.<br/>
-              Preparing to not show you the post.
-            </p>
-          </div>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </main>
-      </>
-    );
-  }
+            {/* Feature comparison table */}
+            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 mb-6 text-left space-y-3.5">
+              {[
+                { title: 'Exclusive PRO badge next to your handle', highlight: false },
+                { title: 'View who liked posts that cannot be read', highlight: false },
+                { title: 'Follow unlimited accounts into silence', highlight: false },
+                { title: 'Encrypted null payload guarantee', highlight: true },
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-xs">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3" />
+                  </div>
+                  <span className={feature.highlight ? 'text-violet-300 font-medium' : 'text-zinc-300'}>
+                    {feature.title}
+                  </span>
+                </div>
+              ))}
 
-  // Default premium page
-  return (
-    <>
-      <Navbar />
-      <main style={{ paddingTop: '80px', maxWidth: '520px', margin: '0 auto', padding: '80px 16px 40px' }}>
-        <div className="glass" style={{ padding: '40px', textAlign: 'center' }}>
-          {/* Badge */}
-          <span className="premium-badge" style={{ display: 'inline-block', marginBottom: '20px', fontSize: '0.85rem', padding: '4px 16px' }}>
-            ANTI-SOCIAL PREMIUM™
-          </span>
-
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '8px' }}>₹99<span style={{ fontWeight: 400, fontSize: '1rem', color: 'var(--text-muted)' }}>/month</span></h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', fontSize: '0.9rem' }}>
-            The premium social media experience. Redefining what premium means.
-          </p>
-
-          {/* Features */}
-          <div style={{ textAlign: 'left', marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { icon: '✓', text: 'See who posted', color: 'var(--green)' },
-              { icon: '✓', text: 'See when they posted', color: 'var(--green)' },
-              { icon: '✓', text: 'See how many people liked it', color: 'var(--green)' },
-              { icon: '✓', text: 'See that there are comments', color: 'var(--green)' },
-            ].map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem' }}>
-                <span style={{ color: f.color, fontWeight: 700, fontSize: '1rem' }}>{f.icon}</span>
-                <span>{f.text}</span>
+              <div className="pt-2 border-t border-white/5 flex items-center gap-3 text-xs">
+                <div className="w-5 h-5 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
+                  <X className="w-3 h-3" />
+                </div>
+                <span className="text-rose-300 font-medium">Seeing post contents</span>
               </div>
-            ))}
+            </div>
 
-            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+            {/* CTA */}
+            <button
+              onClick={handleSubscribe}
+              className="btn-gradient w-full py-3.5 text-sm font-bold shadow-lg shadow-violet-500/30"
+            >
+              <span>Upgrade Now for ₹99</span>
+              <Sparkles className="w-4 h-4 text-amber-300" />
+            </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem' }}>
-              <span style={{ color: 'var(--danger)', fontWeight: 700 }}>✗</span>
-              <span style={{ color: 'var(--text-muted)' }}>
-                <strong style={{ color: 'var(--text)' }}>Still can't see the post</strong>
-              </span>
+            <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
+              <span>Simulated payment • 100% money back guarantee of dissatisfaction</span>
             </div>
           </div>
-
-          <button
-            className="btn-primary"
-            onClick={handleSubscribe}
-            style={{ width: '100%', padding: '16px', fontSize: '1rem', marginBottom: '12px' }}
-          >
-            Subscribe → ₹99/month
-          </button>
-
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.6, opacity: 0.6 }}>
-            By subscribing, you acknowledge that content will remain inaccessible in perpetuity.
-            No refunds for emotional distress. Curiosity is not covered under any warranty.
-          </p>
-        </div>
+        )}
       </main>
-    </>
+    </div>
   );
 }
