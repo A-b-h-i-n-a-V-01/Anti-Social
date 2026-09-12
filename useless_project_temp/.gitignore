@@ -1,0 +1,16 @@
+# SQLite WAL/SHM runtime files
+backend/antisocial.db-shm
+backend/antisocial.db-wal
+
+# Environment files
+.env
+
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
