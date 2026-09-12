@@ -51,8 +51,9 @@ export const api = {
   getUnreadCount: () => request('/notifications/unread-count'),
   markAllRead: () => request('/notifications/read-all', { method: 'PUT' }),
 
-  // Profile
+  // Profile & Users
   getProfile: (username: string) => request(`/users/${username}`),
+  searchUsers: (query: string) => request(`/users/search?q=${encodeURIComponent(query)}`),
 
   // Premium
   getPremiumInfo: () => request('/premium'),
