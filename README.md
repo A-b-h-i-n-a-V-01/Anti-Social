@@ -80,34 +80,7 @@ For Software:
 
 # Diagrams
 ![Workflow](Add your workflow/architecture diagram here)
-*Anti-Social architecture workflow: User submits post -> Express stores in SQLite -> API sanitizes post content to null -> Next.js displays engagement metrics with humorous redaction notices.*
-
-For Hardware:
-
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Not applicable for this software project.*
-
-![Schematic](Add your schematic diagram here)
-*Not applicable for this software project.*
-
-# Build Photos
-![Components](Add photo of your components here)
-*Not applicable for this software project.*
-
-![Build](Add photos of build process here)
-*Not applicable for this software project.*
-
-![Final](Add photo of final product here)
-*Not applicable for this software project.*
-
-### Project Demo
-# Video
-[Add your demo video link here]
-*Demonstrates account creation, posting to the void, liking/commenting on unreadable posts, explore discovery, and the premium subscription experience.*
-
-# Additional Demos
-[Add any extra demo materials/links]
+*Anti-Social architecture workflow: User submits post -> Express stores in SQLite -> API sanitizes post content to null -> Next.js displays engagement metrics with humorous redaction notices.
 
 ## Team Contributions
 - Anirudh Ajikumar: Frontend UI/UX architecture, Next.js page designs, interactive components (Feed, Explore, Premium, ExitPopup), and client-side styling.
