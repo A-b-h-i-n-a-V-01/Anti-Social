@@ -4,6 +4,9 @@
   "description": "The backend that knows everything and tells you nothing.",
   "main": "src/index.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "start": "node --experimental-sqlite src/index.js",
     "dev": "node --experimental-sqlite --watch src/index.js",
