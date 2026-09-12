@@ -1,10 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
-import { Lock, Heart, MessageCircle, ArrowLeft, Send, Sparkles, AlertCircle, ShieldAlert } from 'lucide-react';
+import FloatingBottomNav from '@/components/FloatingBottomNav';
+import { getReasonForPost } from '@/lib/reasons';
 
 export default function PostDetailPage() {
   const { user, loading } = useAuth();
@@ -16,6 +18,7 @@ export default function PostDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [showUnavailable, setShowUnavailable] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth/login');
@@ -58,132 +61,145 @@ export default function PostDetailPage() {
     const diff = (Date.now() - new Date(ts).getTime()) / 1000;
     if (diff < 60) return `${Math.floor(diff)}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
   };
 
   if (loading || !post) return null;
 
   return (
-    <div className="min-h-screen bg-[#07070b]">
+    <>
       <Navbar />
-      <main className="max-w-2xl mx-auto pt-24 pb-16 px-4">
-        {/* Navigation back */}
-        <button
-          onClick={() => router.back()}
-          className="btn-subtle mb-5 text-xs py-1.5 px-3.5 flex items-center gap-1.5"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to stream</span>
+      <main style={{ paddingTop: '80px', maxWidth: '600px', margin: '0 auto', padding: '80px 16px 90px' }}>
+
+        {/* Back */}
+        <button onClick={() => router.back()} className="btn-ghost" style={{ marginBottom: '20px', fontSize: '0.85rem' }}>
+          ← Back
         </button>
 
-        {/* The Centerpiece Locked Post Card */}
-        <div className="glass-panel p-6 mb-6 border border-white/10 shadow-2xl relative overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-violet-500 to-rose-400 p-[1.5px]">
-              <div className="w-full h-full bg-[#111] rounded-full flex items-center justify-center font-bold text-white text-sm">
-                {post.author.username[0].toUpperCase()}
-              </div>
-            </div>
+        {/* Post card */}
+        <div className="glass" style={{ padding: '28px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <Link href={`/profile/${post.author.username}`} style={{ textDecoration: 'none' }}>
+              <div className="avatar" style={{ cursor: 'pointer' }}>{post.author.username[0].toUpperCase()}</div>
+            </Link>
             <div>
-              <div className="font-bold text-sm text-white flex items-center gap-1.5">
-                <span>@{post.author.username}</span>
-                {post.author.is_premium && <span className="pro-pill">PRO</span>}
-              </div>
-              <div className="text-[11px] text-zinc-400">
-                Shared {timeAgo(post.timestamp)} • Zero visibility protocol
-              </div>
+              <Link
+                href={`/profile/${post.author.username}`}
+                style={{
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  textDecoration: 'none',
+                  fontSize: '1rem',
+                  display: 'inline-block',
+                  transition: 'color 0.45s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text)')}
+              >
+                {post.author.username}
+              </Link>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{timeAgo(post.timestamp)}</div>
             </div>
           </div>
 
-          {/* The High-Stakes Unavailable Box */}
-          <div className="bg-gradient-to-b from-violet-950/20 to-black/40 border border-violet-500/30 rounded-2xl p-8 text-center mb-6 relative overflow-hidden">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-400 mb-4 shadow-lg shadow-violet-500/20">
-              <Lock className="w-7 h-7" />
-            </div>
+          {/* The main bit - larger and less round border with ridiculous reason */}
+          {(() => {
+            const reason = getReasonForPost(post.id);
+            return (
+              <div style={{
+                padding: '48px 24px', textAlign: 'center',
+                background: 'var(--surface-2)', borderRadius: '6px',
+                border: '1px dashed rgba(124,92,252,0.3)',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontSize: '2.8rem', marginBottom: '14px' }}>{reason.icon}</div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '10px', maxWidth: '520px', margin: '0 auto 10px' }}>
+                  {reason.title}
+                </h2>
+                {reason.subtitle && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '20px', maxWidth: '460px', margin: '0 auto 20px' }}>
+                    {reason.subtitle}
+                  </p>
+                )}
+                <button
+                  className="btn-ghost"
+                  style={{ fontSize: '0.85rem', borderRadius: '4px', padding: '8px 20px' }}
+                  onClick={() => router.push('/premium')}
+                >
+                  ⭐ Upgrade to Premium — still won't work
+                </button>
+              </div>
+            );
+          })()}
 
-            <h2 className="text-lg font-bold text-white mb-2">
-              This content is permanently unavailable.
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-sm mx-auto leading-relaxed mb-5">
-              The author poured their heart and soul into this transmission.
-              We intercepted it, stored it in SQLite, and deliberately refused to serialize it.
-            </p>
-
-            <button
-              onClick={() => router.push('/premium')}
-              className="btn-subtle text-xs py-2 px-4 inline-flex items-center gap-2 hover:border-amber-400/50"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Upgrade to VIP (will not unlock this)</span>
-            </button>
-          </div>
-
-          {/* Post Metrics & Like */}
-          <div className="flex items-center gap-6 pt-3 border-t border-white/5 text-xs text-zinc-400">
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '20px' }}>
             <button
               onClick={handleLike}
-              className={`flex items-center gap-1.5 transition-all cursor-pointer ${
-                liked ? 'text-rose-500 font-bold' : 'hover:text-rose-400'
-              }`}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                color: liked ? 'var(--danger)' : 'var(--text-muted)',
+                fontWeight: liked ? 600 : 400, fontSize: '0.9rem'
+              }}
             >
-              <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-              <span>{likeCount} likes</span>
+              {liked ? '❤️' : '🤍'} {likeCount} {likeCount === 1 ? 'like' : 'likes'}
             </button>
-
-            <div className="flex items-center gap-1.5">
-              <MessageCircle className="w-4 h-4 text-violet-400" />
-              <span>{comments.length} comments</span>
-            </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              💬 {comments.length} comment{comments.length !== 1 ? 's' : ''}
+            </span>
           </div>
         </div>
 
-        {/* Discussion Section */}
-        <div className="glass-panel p-6 border border-white/10">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-4 flex items-center gap-2">
-            <span>Blind Responses</span>
-            <span className="text-[10px] text-zinc-400 font-normal">({comments.length})</span>
-          </h3>
+        {/* Comments section */}
+        <div className="glass" style={{ padding: '24px' }}>
+          <h3 style={{ fontWeight: 600, marginBottom: '16px', fontSize: '0.95rem' }}>Comments</h3>
 
-          {/* Comment composer */}
-          <form onSubmit={handleComment} className="flex gap-2.5 mb-6">
+          {/* Add comment */}
+          <form onSubmit={handleComment} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <div className="avatar avatar-sm">{user?.username[0].toUpperCase()}</div>
             <input
-              className="input-modern text-xs"
-              placeholder="React to what you think this post said..."
+              className="input"
+              placeholder="Add a comment... (also hidden)"
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
+              onChange={e => setCommentText(e.target.value)}
             />
-            <button
-              type="submit"
-              disabled={submitting || !commentText.trim()}
-              className="btn-gradient px-4 py-2 text-xs flex items-center gap-1.5 flex-shrink-0"
-            >
-              <Send className="w-3 h-3" />
-              <span>{submitting ? '...' : 'Send'}</span>
+            <button className="btn-primary" type="submit" disabled={submitting || !commentText.trim()} style={{ whiteSpace: 'nowrap', padding: '8px 16px', fontSize: '0.85rem' }}>
+              {submitting ? '...' : 'Post'}
             </button>
           </form>
 
           {/* Comments list */}
           {comments.length === 0 ? (
-            <div className="py-8 text-center text-xs text-zinc-400 italic">
-              No reactions yet. Join in and react blindly.
-            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textAlign: 'center', padding: '20px 0' }}>
+              No comments yet. Be the first to react to something you can't see.
+            </p>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {comments.map((c: any) => (
-                <div key={c.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex gap-3 items-start">
-                  <div className="w-7 h-7 rounded-full bg-violet-600/30 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                    {c.author.username[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-zinc-200">@{c.author.username}</span>
-                      <span className="text-[10px] text-zinc-400">{timeAgo(c.timestamp)}</span>
+                <div key={c.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <div className="avatar avatar-sm">{c.author.username[0].toUpperCase()}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <Link
+                        href={`/profile/${c.author.username}`}
+                        style={{
+                          fontWeight: 600,
+                          fontSize: '0.88rem',
+                          color: 'var(--text)',
+                          textDecoration: 'none',
+                          transition: 'color 0.45s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text)')}
+                      >
+                        {c.author.username}
+                      </Link>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{timeAgo(c.timestamp)}</span>
                     </div>
-                    <div className="p-2 rounded-lg bg-black/30 border border-white/5 flex items-center gap-2 text-[11px] text-zinc-400">
-                      <Lock className="w-3 h-3 text-rose-400" />
-                      <span>This comment has been hidden from public scrutiny.</span>
+                    <div className="locked-content" style={{ padding: '8px 12px' }}>
+                      <span style={{ fontSize: '0.9rem' }}>🔒</span>
+                      <span style={{ fontSize: '0.82rem' }}>This comment is unavailable.</span>
                     </div>
                   </div>
                 </div>
@@ -192,6 +208,9 @@ export default function PostDetailPage() {
           )}
         </div>
       </main>
-    </div>
+
+      {/* Floating Bottom Navigation Bar */}
+      <FloatingBottomNav />
+    </>
   );
 }

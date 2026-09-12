@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
-import { UserCheck, UserPlus, Lock, Sparkles, Grid3X3 } from 'lucide-react';
+import FloatingBottomNav from '@/components/FloatingBottomNav';
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -47,124 +47,89 @@ export default function ProfilePage() {
   };
 
   if (loading || fetching) return null;
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-[#07070b] flex items-center justify-center text-xs text-zinc-400">
-        Account not located in the void.
-      </div>
-    );
-  }
+  if (!profile) return <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-muted)' }}>User not found.</div>;
 
   const isOwnProfile = user?.username === profile.username;
 
   return (
-    <div className="min-h-screen bg-[#07070b]">
+    <>
       <Navbar />
-      <main className="max-w-2xl mx-auto pt-24 pb-16 px-4">
-        {/* Profile Card Header */}
-        <div className="glass-panel p-6 mb-6 border border-white/10 shadow-2xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-rose-400 p-[2px] shadow-xl shadow-violet-500/20">
-                <div className="w-full h-full bg-[#0e0e16] rounded-[22px] flex items-center justify-center text-2xl font-black text-white">
-                  {profile.username[0].toUpperCase()}
-                </div>
+      <main style={{ paddingTop: '80px', maxWidth: '640px', margin: '0 auto', padding: '80px 16px 90px' }}>
+
+        {/* Profile header */}
+        <div className="glass" style={{ padding: '28px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', marginBottom: '20px' }}>
+            <div className="avatar avatar-lg">{profile.username[0].toUpperCase()}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: '1.3rem', fontWeight: 800 }}>{profile.username}</h1>
+                {profile.is_premium && <span className="premium-badge">PRO</span>}
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-lg font-black text-white tracking-tight">
-                    @{profile.username}
-                  </h1>
-                  {profile.is_premium && <span className="pro-pill">PRO</span>}
-                </div>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  {profile.bio || "Active participant in the silent collective."}
-                </p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-zinc-400 font-medium">
-                  <span>
-                    <strong className="text-white">{profile.post_count}</strong> transmissions
-                  </span>
-                  <span>
-                    <strong className="text-white">{profile.followers}</strong> observers
-                  </span>
-                  <span>
-                    <strong className="text-white">{profile.following}</strong> observing
-                  </span>
-                </div>
+              {profile.bio && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>{profile.bio}</p>
+              )}
+              <div style={{ display: 'flex', gap: '20px', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                <span><strong style={{ color: 'var(--text)' }}>{profile.post_count}</strong> posts</span>
+                <span><strong style={{ color: 'var(--text)' }}>{profile.followers}</strong> followers</span>
+                <span><strong style={{ color: 'var(--text)' }}>{profile.following}</strong> following</span>
               </div>
             </div>
-
-            {/* Follow Button */}
             {!isOwnProfile && (
               <button
+                className={following ? 'btn-ghost' : 'btn-primary'}
                 onClick={handleFollow}
                 disabled={followLoading}
-                className={
-                  following
-                    ? 'btn-subtle text-xs py-2 px-4'
-                    : 'btn-gradient text-xs py-2 px-5'
-                }
               >
-                {following ? (
-                  <>
-                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Observing</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>Observe</span>
-                  </>
-                )}
+                {following ? 'Unfollow' : 'Follow'}
               </button>
             )}
           </div>
 
           {following && !isOwnProfile && (
-            <div className="mt-4 p-3 rounded-xl bg-violet-950/40 border border-violet-500/25 text-violet-300 text-xs flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-              <span>You now observe @{profile.username}. Their transmissions remain 100% invisible to you.</span>
+            <div style={{ padding: '10px 14px', background: 'rgba(124,92,252,0.1)', borderRadius: '8px', fontSize: '0.84rem', color: 'var(--accent)', border: '1px solid rgba(124,92,252,0.2)' }}>
+              You are now following {profile.username}. You still cannot see their posts.
             </div>
           )}
         </div>
 
-        {/* Transmissions Grid Header */}
-        <div className="flex items-center justify-between mb-4 px-1">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
-            <Grid3X3 className="w-4 h-4 text-violet-400" />
-            <span>Encrypted Vault ({profile.post_count})</span>
-          </div>
-        </div>
+        {/* Posts grid */}
+        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '0.95rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Posts — {profile.post_count}
+        </h2>
 
-        {/* Transmissions Grid */}
         {profile.posts.length === 0 ? (
-          <div className="glass-panel p-10 text-center border border-dashed border-white/10">
-            <Lock className="w-6 h-6 text-zinc-400 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">
-              {isOwnProfile
-                ? "You haven't transmitted anything into the void yet."
-                : `@${profile.username} hasn't transmitted anything yet.`}
+          <div className="glass" style={{ padding: '40px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-muted)' }}>
+              {isOwnProfile ? "You haven't posted anything yet. (You'd never see it anyway.)" : `${profile.username} hasn't posted anything. (Or has they? We'll never know.)`}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             {profile.posts.map((p: any) => (
               <div
                 key={p.id}
                 onClick={() => router.push(`/post/${p.id}`)}
-                className="aspect-square glass-panel p-3 flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-violet-500/50 hover:scale-[1.03] transition-all duration-200 group"
+                style={{
+                  aspectRatio: '1', borderRadius: '10px', cursor: 'pointer',
+                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: '6px', transition: 'transform 0.15s ease'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.03)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = '')}
               >
-                <div className="w-8 h-8 rounded-xl bg-violet-600/10 group-hover:bg-violet-600/25 border border-violet-500/20 flex items-center justify-center text-violet-400 transition-colors">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <div className="text-[10px] font-mono text-zinc-400">
-                  ❤️ {p.likes} • 💬 {p.comments}
+                <span style={{ fontSize: '1.6rem' }}>🔒</span>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  ❤️ {p.likes} 💬 {p.comments}
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
-    </div>
+
+      {/* Floating Bottom Navigation Bar */}
+      <FloatingBottomNav />
+    </>
   );
 }

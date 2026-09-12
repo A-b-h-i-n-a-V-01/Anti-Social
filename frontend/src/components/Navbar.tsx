@@ -1,125 +1,266 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { Home, Compass, Bell, Sparkles, User, LogOut, ShieldAlert } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await api.searchUsers(searchQuery);
+        setSearchResults(results);
+        setShowDropdown(true);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('as_theme') as 'dark' | 'light' | null;
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.className = saved;
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('as_theme', next);
+    document.documentElement.className = next;
+    document.documentElement.setAttribute('data-theme', next);
+  };
 
   if (!user) return null;
 
-  const navItems = [
-    { href: '/feed', icon: Home, label: 'Feed' },
-    { href: '/explore', icon: Compass, label: 'Explore' },
-    { href: '/notifications', icon: Bell, label: 'Alerts' },
-    { href: '/premium', icon: Sparkles, label: 'Premium' },
-  ];
-
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3">
-      <nav className="max-w-5xl mx-auto glass-panel px-5 py-2.5 flex items-center justify-between border border-white/10 shadow-2xl backdrop-blur-2xl">
-        {/* Brand */}
-        <Link href="/feed" className="flex items-center gap-2.5 group text-decoration-none">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-rose-400 p-[1.5px] shadow-lg shadow-violet-500/25 transition-transform duration-300 group-hover:scale-105">
-            <div className="w-full h-full bg-[#0a0a10] rounded-[10px] flex items-center justify-center text-lg">
-              🫥
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-base tracking-tight leading-none text-holo">
-              AntiSocial
-            </span>
-            <span className="text-[9px] uppercase tracking-widest text-zinc-500 font-semibold mt-0.5">
-              Zero Visibility
-            </span>
-          </div>
-        </Link>
+    <nav style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: 'var(--surface)',
+      backdropFilter: 'blur(20px)',
+      borderBottom: '1px solid var(--border)',
+      height: '64px',
+      display: 'flex', alignItems: 'center',
+      padding: '0 24px',
+      justifyContent: 'space-between',
+      gap: '16px'
+    }}>
+      {/* Logo */}
+      <Link href="/feed" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        <span style={{ fontSize: '1.3rem' }}>🤐</span>
+        <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.02em' }}>
+          <span className="gradient-text">Anti</span>
+          <span style={{ color: 'var(--text-muted)' }}>Social</span>
+        </span>
+      </Link>
 
-        {/* Center Navigation Links */}
-        <div className="flex items-center gap-1.5 p-1 bg-white/[0.03] border border-white/5 rounded-full">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                  active
-                    ? 'text-white bg-white/10 shadow-inner border border-white/15'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${active ? 'text-violet-400' : ''}`} />
-                <span className="hidden sm:inline">{item.label}</span>
-                {item.href === '/premium' && !user.is_premium && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Right User Area */}
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex items-center gap-2.5 pl-1.5 pr-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 transition-all duration-200 cursor-pointer"
-          >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-[1.5px]">
-              <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center text-xs font-bold text-white">
-                {user.username[0].toUpperCase()}
-              </div>
-            </div>
-            <span className="text-xs font-medium text-zinc-200 hidden md:inline">
-              @{user.username}
-            </span>
-            {user.is_premium && (
-              <span className="pro-pill">PRO</span>
-            )}
-          </button>
-
-          {/* User dropdown popup */}
-          {menuOpen && (
-            <div className="absolute right-0 top-11 min-w-[200px] glass-panel p-2 z-50 border border-white/15 shadow-2xl backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3 py-2 border-b border-white/10 mb-1">
-                <p className="text-[11px] text-zinc-400 font-medium">Signed in as</p>
-                <p className="text-xs font-bold text-white truncate">@{user.username}</p>
-                <div className="flex items-center gap-1.5 mt-1 text-[10px] text-rose-400/80">
-                  <ShieldAlert className="w-3 h-3" />
-                  <span>Posts remain inaccessible</span>
-                </div>
-              </div>
-
-              <Link
-                href={`/profile/${user.username}`}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <User className="w-3.5 h-3.5 text-violet-400" />
-                <span>My Profile</span>
-              </Link>
-
-              <button
-                onClick={() => {
-                  logout();
-                  router.push('/');
-                  setMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Log out</span>
-              </button>
-            </div>
+      {/* Top Search Bar for Accounts */}
+      <div ref={searchRef} style={{ position: 'relative', flex: '1', maxWidth: '420px', margin: '0 12px' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <span style={{
+            position: 'absolute', left: '14px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', pointerEvents: 'none'
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            className="input"
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => {
+              if (searchQuery.trim()) setShowDropdown(true);
+            }}
+            placeholder="Search accounts... (@handle or name)"
+            style={{
+              paddingLeft: '38px',
+              paddingRight: searchQuery ? '34px' : '14px',
+              height: '40px',
+              fontSize: '0.88rem',
+              borderRadius: '20px',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)'
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setShowDropdown(false);
+              }}
+              style={{
+                position: 'absolute', right: '12px', background: 'none', border: 'none',
+                color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem'
+              }}
+            >
+              ✕
+            </button>
           )}
         </div>
-      </nav>
-    </header>
+
+        {/* Search Results Dropdown */}
+        {showDropdown && searchQuery.trim().length > 0 && (
+          <div className="glass" style={{
+            position: 'absolute', top: '48px', left: 0, right: 0,
+            maxHeight: '340px', overflowY: 'auto', zIndex: 220,
+            padding: '8px', boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+            border: '1px solid var(--border)', borderRadius: '12px'
+          }}>
+            {isSearching ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Searching accounts...
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                No accounts found. (Even if they existed, their posts would be hidden.)
+              </div>
+            ) : (
+              searchResults.map(result => (
+                <div
+                  key={result.id}
+                  onClick={() => {
+                    setShowDropdown(false);
+                    setSearchQuery('');
+                    router.push(`/profile/${result.username}`);
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div className="avatar avatar-sm">{result.username[0].toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text)' }}>
+                        @{result.username}
+                      </span>
+                      {result.is_premium && <span className="premium-badge">PRO</span>}
+                    </div>
+                    {result.bio && (
+                      <div style={{
+                        fontSize: '0.78rem', color: 'var(--text-muted)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                      }}>
+                        {result.bio}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent)', opacity: 0.8 }}>View 🔒</span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* User menu & Actions */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <div className="avatar avatar-sm" style={{ width: '34px', height: '34px', fontSize: '0.85rem' }}>
+            {user.username[0].toUpperCase()}
+          </div>
+          {user.is_premium && <span className="premium-badge">PRO</span>}
+        </button>
+
+        {menuOpen && (
+          <div className="glass-sm" style={{
+            position: 'absolute', right: 0, top: '44px',
+            minWidth: '200px', padding: '8px', zIndex: 200,
+            boxShadow: '0 12px 32px rgba(0,0,0,0.3)'
+          }}>
+            <Link href={`/profile/${user.username}`}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', color: 'var(--text)', textDecoration: 'none', borderRadius: '8px', fontSize: '0.9rem' }}
+              onClick={() => setMenuOpen(false)}>
+              <span>👤</span> Profile
+            </Link>
+
+            {/* Dark / Light Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '8px 12px', background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer',
+                borderRadius: '8px', fontSize: '0.9rem'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
+                <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--surface-2)', padding: '2px 6px', borderRadius: '4px' }}>
+                Switch
+              </span>
+            </button>
+
+            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+
+            <button
+              onClick={() => { logout(); router.push('/'); setMenuOpen(false); }}
+              style={{
+                width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 12px', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer',
+                borderRadius: '8px', fontSize: '0.9rem'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,77,109,0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span>🚪</span> Sign out
+            </button>
+          </div>
+        )}
+      </div>
+    </nav>
   );
 }
